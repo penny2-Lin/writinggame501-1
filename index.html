@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>議論文寫作闖關地圖：主角覺醒之路</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* 全局字體設定 */
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+        /* RPG 標題專用字體 */
+        .rpg-font {
+            font-family: 'DotGothic16', sans-serif;
+        }
+        
+        /* 簡單的動畫效果 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        
+        /* 滾動條樣式 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b; 
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen selection:bg-purple-500 selection:text-white pb-20">
+
+    <div id="app"></div>
+
+    <script>
+        // --- 遊戲資料庫 (Data) ---
+        const stances = [
+            {
+                id: 'A',
+                title: '屬性 A：養分系',
+                desc: '失敗與逆境是成長中最重要的養分。',
+                icon: 'scroll',
+                color: 'border-green-500 bg-green-900/20',
+                hint: '既然選擇了「養分系」，請強調失敗如何成為未來的肥料。',
+                sentencePattern: '雖然（遭遇失敗）...，但是（這反而成為了...）'
+            },
+            {
+                id: 'B',
+                title: '屬性 B：經驗系',
+                desc: '從失敗中獲得體悟，能幫助我們累積經驗與能力。',
+                icon: 'sword',
+                color: 'border-blue-500 bg-blue-900/20',
+                hint: '既然選擇了「經驗系」，請強調從錯誤中學到了具體的方法。',
+                sentencePattern: '不僅（經歷了失敗）...，而且（學會了...）'
+            },
+            {
+                id: 'C',
+                title: '屬性 C：信心系',
+                desc: '失敗能讓我們更樂觀與自信地面對未來。',
+                icon: 'shield',
+                color: 'border-yellow-500 bg-yellow-900/20',
+                hint: '既然選擇了「信心系」，請強調跨越障礙後的心態轉變。',
+                sentencePattern: '正因為（克服了...），所以（更加確信...）'
+            }
+        ];
+
+        const mentors = [
+            {
+                id: 'LiAng',
+                name: '國際導演 李安',
+                failure: '兩次大學聯考落榜，畢業後六年找不到工作',
+                solution: '檢視現況並思考如何扳回頹勢，從挫折中學習成長',
+                result: '作品揚名國際。',
+                icon: 'clapperboard',
+                imgColor: 'bg-indigo-600'
+            },
+            {
+                id: 'LinYang',
+                name: '羽球金牌 麟洋配',
+                failure: '奧運首場敗北陷入低潮，被分在不被看好的「死亡之組」',
+                solution: '頂住外界壓力的議論聲，彼此溝通調整作戰策略',
+                result: '奧運史上首組連霸的男雙金牌。',
+                icon: 'trophy',
+                imgColor: 'bg-yellow-600'
+            },
+            {
+                id: 'ChefChiang',
+                name: '名廚 江振誠',
+                failure: '語言不通，每天工作 18 小時並睡在倉庫地板',
+                solution: '咬緊牙關，反覆做好煮馬鈴薯等每一個細節',
+                result: '成為世界前五十大名廚。',
+                icon: 'utensils',
+                imgColor: 'bg-red-600'
+            },
+            {
+                id: 'BoxerChen',
+                name: '拳擊女王 陳念琴',
+                failure: '奧運十六強止步，備戰時卻不幸得到癌症',
+                solution: '忍受化療副作用的痛苦，在體能變差時仍堅持不斷訓練',
+                result: '在巴黎奧運獲得銅牌。',
+                icon: 'swords',
+                imgColor: 'bg-pink-600'
+            }
+        ];
+
+        const argumentQuotes = [
+            {
+                text: "社會教我們往往是如何迎向成功，誰教我們面對失敗？",
+                author: "戴資穎（羽球球后）",
+                analysis: "這句話非常適合用來「點題」。小戴點出了一個很棒的思考點：學校都在教怎麼贏，但學會「輸」其實更重要。",
+                usage: "正如羽球球后戴資穎所言：「社會教我們往往是如何迎向成功，誰教我們面對失敗？」在成長的路上，學會如何面對挫折，或許比學會如何贏得比賽更為關鍵。"
+            },
+            {
+                text: "本來無望的事，大膽嘗試，往往能成功。",
+                author: "莎士比亞（英國劇作家）",
+                analysis: "很多時候我們是因為害怕失敗才不敢行動。莎士比亞鼓勵我們，就算看起來沒希望，也要勇敢試試看。",
+                usage: "不要因為害怕失敗而卻步，莎士比亞曾說：「本來無望的事，大膽嘗試，往往能成功。」只有踏出第一步，我們才有機會看見成長的風景。"
+            },
+            {
+                text: "一切的壓力、挑戰和所有消極的事物，對我而言都是成功的機會！",
+                author: "科比‧布萊恩（Kobe Bryant，NBA傳奇球星）",
+                analysis: "這就是著名的「曼巴精神」。把所有不好的事情（壓力、失敗）都看成是讓自己升級的「機會」。",
+                usage: "面對逆境時，我們應當學習科比的精神：「一切的壓力、挑戰和所有消極的事物，對我而言都是成功的機會！」將絆腳石轉化為墊腳石。"
+            },
+            {
+                text: "失敗為成功之母。",
+                author: "古諺語（必備經典）",
+                analysis: "這是最基礎但也最好用的句子。",
+                usage: "俗話說：「失敗為成功之母。」每一次的跌倒，其實都是為了下一次跑得更快而做的準備。"
+            },
+            {
+                text: "我沒有失敗，我只是發現了一萬種行不通的方法。",
+                author: "愛迪生（Thomas Edison，發明大王）",
+                analysis: "愛迪生發明燈泡失敗了非常多次。這句話教我們要樂觀，把失敗看成是一種「發現」。",
+                usage: "面對挫折，我們應該學習愛迪生的精神：「我沒有失敗，只是發現了一萬種行不通的方法。」只要換個角度想，失敗也是一種收穫。"
+            },
+            {
+                text: "不經一事，不長一智。",
+                author: "曹雪芹《紅樓夢》（中國俗諺）",
+                analysis: "沒有經歷過某件事（包含失敗的事），就不能增長那方面的智慧。",
+                usage: "常言道：「不經一事，不長一智。」如果沒有經歷過這次考試搞砸的教訓，我就不會明白提早複習的重要性。"
+            }
+        ];
+
+        const conclusionQuotes = [
+            { id: 1, text: '「成功的背後只有堅持，沒有僥倖。」', author: '江振誠（國際名廚）' },
+            { id: 2, text: '「我可以接受失敗，但我不能接受『未曾嘗試』。」', author: '麥可‧喬丹（Michael Jordan，籃球之神）' },
+            { id: 3, text: '「成功就是從一個失敗走到另一個失敗，卻不失去熱情。」', author: '邱吉爾（Winston Churchill，英國前首相）' }
+        ];
+
+        // --- 應用程式狀態 (State Management) ---
+        const state = {
+            currentLevel: 0,
+            showVocab: false,
+            showQuoteBag: false,
+            formData: {
+                stance: null,
+                reason: '',
+                selectedMentors: [],
+                mentorInputs: {},
+                quote: null,
+                customConclusion: ''
+            }
+        };
+
+        // --- 核心功能函數 (Logic) ---
+
+        function generateArticle() {
+            if (!state.formData.stance) return '';
+            
+            const intro = `    關於失敗，我有屬於自己的覺醒看法。我認為${state.formData.stance.desc.replace('。', '')}。`;
+            const reason = `\n\n    為什麼這麼說呢？因為${state.formData.reason || '...'}。這段經歷讓我們學會了如何調整自己，變得更強大。`;
+            
+            let evidence = '';
+            if (state.formData.selectedMentors.length > 0) {
+                evidence = '\n\n';
+                state.formData.selectedMentors.forEach((mentor, index) => {
+                    const inputs = state.formData.mentorInputs[mentor.id] || { story: '...', lesson: '...' };
+                    const transition = index === 0 ? '    首先，舉例來說，' : '\n\n    此外，無獨有偶，';
+                    evidence += `${transition}${inputs.story}這讓我學到了${inputs.lesson}`;
+                });
+            }
+
+            let conclusion = '';
+            if (state.formData.quote) {
+                conclusion = `\n\n    總而言之，面對挫折我們不應氣餒。正如${state.formData.quote.author}所說：${state.formData.quote.text} ${state.formData.customConclusion || ''}`;
+            }
+
+            return `${intro}${reason}${evidence}${conclusion}`;
+        }
+
+        function getUserInputText() {
+            let text = state.formData.reason;
+            if (state.formData.selectedMentors.length > 0) {
+                state.formData.selectedMentors.forEach(m => {
+                    const input = state.formData.mentorInputs[m.id];
+                    if (input) {
+                        text += (input.story || '') + (input.lesson || '');
+                    }
+                });
+            }
+            text += state.formData.customConclusion;
+            return text;
+        }
+
+        function calculateEvaluation() {
+            const article = generateArticle();
+            const currentTotalWordCount = article.replace(/\s/g, '').length;
+            const userText = getUserInputText();
+            const userWordCount = userText.replace(/\s/g, '').length;
+            
+            let score = 0;
+            let comments = [];
+
+            // 1. Length Check
+            if (userWordCount >= 180) {
+                score += 40;
+                comments.push({ type: 'good', text: `輸出火力強大（手寫 ${userWordCount} 字），你的原創內容非常豐富！` });
+            } else if (userWordCount >= 100) {
+                score += 30;
+                comments.push({ type: 'warn', text: `輸出火力尚可（手寫 ${userWordCount} 字），建議再多描述一些細節會更生動。` });
+            } else {
+                score += 10;
+                comments.push({ type: 'bad', text: "輸出火力不足，太依賴自動生成的文字囉，多寫一點自己的想法吧！" });
+            }
+
+            // 2. Keywords Check
+            const keywords = ['因為', '所以', '雖然', '但是', '不僅', '而且', '首先', '此外', '總而言之', '正如', '舉例來說', '只要', '就'];
+            const foundKeywords = keywords.filter(k => userText.includes(k));
+            
+            if (foundKeywords.length >= 3) {
+                score += 30;
+                comments.push({ type: 'good', text: "連招順暢！你在自己的段落中靈活運用了連接詞。" });
+            } else if (foundKeywords.length >= 1) {
+                score += 20;
+                comments.push({ type: 'warn', text: "連招普通。試著在你的句子中加入「雖然...但是...」等複句來增強層次。" });
+            } else {
+                score += 10;
+                comments.push({ type: 'bad', text: "卡招了？你的段落中似乎很少使用連接詞，讀起來可能會不夠流暢。" });
+            }
+
+            // 3. Completeness Check
+            let completenessScore = 0;
+            if (state.formData.reason.length > 10) completenessScore += 10;
+            if (state.formData.selectedMentors.length === 2 && 
+                state.formData.selectedMentors.every(m => {
+                    const inp = state.formData.mentorInputs[m.id];
+                    return inp && inp.story.length > 5;
+                })) completenessScore += 10;
+            if (state.formData.customConclusion.length > 5) completenessScore += 10;
+            
+            score += completenessScore;
+            if (completenessScore < 30) {
+                comments.push({ type: 'warn', text: "裝備未齊全，部分關卡似乎寫得比較簡單喔。" });
+            } else {
+                comments.push({ type: 'good', text: "全套神裝！論點、理由、證據、結論結構完整。" });
+            }
+
+            // Determine Rank
+            let rank = { label: 'C', title: '新手見習生', color: 'text-slate-400', bg: 'bg-slate-500' };
+            if (score >= 90) rank = { label: 'S', title: 'S級傳奇獵人', color: 'text-yellow-400', bg: 'bg-yellow-500' };
+            else if (score >= 80) rank = { label: 'A', title: 'A級卓越獵人', color: 'text-purple-400', bg: 'bg-purple-500' };
+            else if (score >= 60) rank = { label: 'B', title: 'B級資深獵人', color: 'text-blue-400', bg: 'bg-blue-500' };
+
+            return { score, comments, rank, userWordCount, currentTotalWordCount };
+        }
+
+        function isLevelComplete() {
+            if (state.currentLevel === 0) return !!state.formData.stance;
+            if (state.currentLevel === 1) return state.formData.reason.length > 5;
+            if (state.currentLevel === 2) {
+                if (state.formData.selectedMentors.length !== 2) return false;
+                return state.formData.selectedMentors.every(m => {
+                    const input = state.formData.mentorInputs[m.id];
+                    return input && input.story.length > 5 && input.lesson.length > 5;
+                });
+            }
+            if (state.currentLevel === 3) return !!state.formData.quote && state.formData.customConclusion.length > 5;
+            return true;
+        }
+
+        // --- 事件處理 (Event Handlers) ---
+        window.actions = {
+            setStance: (index) => {
+                state.formData.stance = stances[index];
+                render();
+            },
+            updateReason: (value) => {
+                state.formData.reason = value;
+                renderUpdatesOnly(); // 優化：只更新文字統計等小部分
+            },
+            toggleMentor: (index) => {
+                const mentor = mentors[index];
+                const selected = state.formData.selectedMentors;
+                const isSelected = selected.find(m => m.id === mentor.id);
+                
+                if (isSelected) {
+                    state.formData.selectedMentors = selected.filter(m => m.id !== mentor.id);
+                } else {
+                    if (selected.length < 2) {
+                        state.formData.selectedMentors.push(mentor);
+                        if (!state.formData.mentorInputs[mentor.id]) {
+                            state.formData.mentorInputs[mentor.id] = { story: '', lesson: '' };
+                        }
+                    } else {
+                        return; // Max reached
+                    }
+                }
+                render();
+            },
+            updateMentorInput: (mentorId, field, value) => {
+                state.formData.mentorInputs[mentorId][field] = value;
+                renderUpdatesOnly();
+            },
+            setQuote: (index) => {
+                state.formData.quote = conclusionQuotes[index];
+                render();
+            },
+            updateConclusion: (value) => {
+                state.formData.customConclusion = value;
+                renderUpdatesOnly();
+            },
+            nextLevel: () => {
+                if (state.currentLevel < 4) {
+                    state.currentLevel++;
+                    render();
+                }
+            },
+            prevLevel: () => {
+                if (state.currentLevel > 0) {
+                    state.currentLevel--;
+                    render();
+                }
+            },
+            toggleVocab: () => {
+                state.showVocab = !state.showVocab;
+                render();
+            },
+            toggleQuoteBag: () => {
+                state.showQuoteBag = !state.showQuoteBag;
+                render();
+            },
+            resetGame: () => {
+                state.currentLevel = 0;
+                render();
+            },
+            copyText: () => {
+                navigator.clipboard.writeText(generateArticle());
+                alert('文章已複製到剪貼簿！');
+            }
+        };
+
+        // --- 渲染畫面 (Rendering) ---
+        
+        // 簡單的文字統計更新，避免輸入時整個重繪導致焦點跑掉
+        function renderUpdatesOnly() {
+           const evalData = calculateEvaluation();
+           const counterEl = document.getElementById('word-count-display');
+           if(counterEl) {
+               counterEl.innerText = evalData.currentTotalWordCount;
+               counterEl.className = `font-mono font-bold text-lg ${evalData.currentTotalWordCount >= 350 ? 'text-green-400' : 'text-white'}`;
+           }
+           // 更新字數提示
+           const reasonCount = document.getElementById('reason-count');
+           if(reasonCount) reasonCount.innerText = state.formData.reason.length + " 字";
+        }
+
+        function render() {
+            const app = document.getElementById('app');
+            const evalData = calculateEvaluation();
+            const levelComplete = isLevelComplete();
+            
+            // Icon Helper
+            const icon = (name, classes = "") => `<i data-lucide="${name}" class="${classes}"></i>`;
+
+            let mainContent = '';
+
+            // --- Level 0: Stance ---
+            if (state.currentLevel === 0) {
+                mainContent = `
+                    <div class="grid gap-4 md:grid-cols-1 animate-fade-in">
+                        ${stances.map((s, idx) => {
+                            const isSelected = state.formData.stance?.id === s.id;
+                            return `
+                            <button onclick="actions.setStance(${idx})" 
+                                class="relative group p-6 rounded-xl border-2 text-left transition-all duration-300 w-full
+                                ${isSelected ? `${s.color} shadow-[0_0_20px_rgba(0,0,0,0.3)] scale-[1.02]` : 'border-slate-700 bg-slate-800 hover:border-slate-500 hover:bg-slate-750'}">
+                                <div class="flex items-start gap-4">
+                                    <div class="p-3 rounded-lg bg-slate-900 ${isSelected ? 'scale-110' : ''}">
+                                        ${icon(s.icon, isSelected ? 'w-8 h-8 text-white' : 'w-8 h-8 text-slate-400')}
+                                    </div>
+                                    <div>
+                                        <h3 class="text-xl font-bold mb-1 ${isSelected ? 'text-white' : 'text-slate-200'}">${s.title}</h3>
+                                        <p class="text-slate-400 group-hover:text-slate-300">${s.desc}</p>
+                                    </div>
+                                </div>
+                                ${isSelected ? `<div class="absolute top-4 right-4 text-green-400 animate-pulse">${icon('check-circle', 'w-6 h-6')}</div>` : ''}
+                            </button>
+                        `}).join('')}
+                    </div>
+                `;
+            }
+
+            // --- Level 1: Reason ---
+            else if (state.currentLevel === 1) {
+                mainContent = `
+                    <div class="bg-slate-800 rounded-xl p-8 border border-slate-700 shadow-xl animate-fade-in">
+                        <div class="mb-6 bg-blue-900/30 p-5 rounded-lg border border-blue-500/30">
+                            <div class="flex items-start gap-4 mb-3">
+                                ${icon('user', 'text-blue-400 shrink-0 w-6 h-6')}
+                                <div>
+                                    <p class="text-blue-200 text-sm font-bold mb-1">軍師提示：</p>
+                                    <p class="text-blue-100 text-base leading-relaxed">${state.formData.stance?.hint || "請說明為什麼失敗能讓你變強。"}</p>
+                                </div>
+                            </div>
+                            <div class="ml-10 pt-3 border-t border-blue-500/20">
+                                <p class="text-xs text-blue-300 font-bold mb-2 uppercase tracking-wide">推薦裝備</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <div class="bg-slate-900/50 p-2 rounded text-green-300 font-mono text-sm border border-slate-700">
+                                        複句：${state.formData.stance?.sentencePattern || "因為...，所以..."}
+                                    </div>
+                                    <button onclick="actions.toggleQuoteBag()" class="bg-indigo-900/50 hover:bg-indigo-900/80 p-2 rounded text-indigo-300 font-mono text-sm border border-indigo-700 flex items-center gap-1 transition-colors">
+                                        ${icon('quote', 'w-3 h-3')} 引用名言 (點擊查看)
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <label class="block text-lg font-medium text-slate-300 mb-4">你的理由：</label>
+                        <div class="relative">
+                            <textarea oninput="actions.updateReason(this.value)"
+                                class="w-full bg-slate-900 border-2 border-slate-600 rounded-lg p-4 text-white text-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-500/50 outline-none transition-all min-h-[120px]"
+                                placeholder="試試看用「${state.formData.stance?.sentencePattern?.split('...')[0]}...」開頭，或是引用一句名言來寫..."
+                            >${state.formData.reason}</textarea>
+                            <div id="reason-count" class="absolute bottom-4 right-4 text-xs text-slate-500">${state.formData.reason.length} 字</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // --- Level 2: Evidence ---
+            else if (state.currentLevel === 2) {
+                const mentorGrid = mentors.map((m, idx) => {
+                    const isSelected = state.formData.selectedMentors.find(sel => sel.id === m.id);
+                    const isMaxReached = state.formData.selectedMentors.length >= 2;
+                    const borderClass = isSelected ? 'border-yellow-500 ring-2 ring-yellow-500/50 shadow-lg scale-[1.02]' : 
+                                      (isMaxReached ? 'border-slate-800 opacity-50 grayscale' : 'border-slate-700 hover:border-slate-500 bg-slate-800');
+                    
+                    return `
+                        <div onclick="actions.toggleMentor(${idx})" 
+                            class="cursor-pointer rounded-xl overflow-hidden border-2 transition-all duration-300 relative group ${borderClass}">
+                            <div class="h-24 ${m.imgColor} flex items-center justify-center relative overflow-hidden">
+                                <div class="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors"></div>
+                                ${icon(m.icon, 'text-white w-8 h-8')}
+                            </div>
+                            <div class="p-4 bg-slate-800 relative">
+                                <h3 class="font-bold text-lg text-white mb-1">${m.name}</h3>
+                                <p class="text-slate-400 text-xs">${isSelected ? '已召喚' : isMaxReached ? '已達上限' : '點擊召喚'}</p>
+                            </div>
+                            ${isSelected ? `<div class="absolute top-2 right-2 text-yellow-400 bg-black/50 rounded-full p-1">${icon('check-circle', 'w-5 h-5')}</div>` : ''}
+                        </div>
+                    `;
+                }).join('');
+
+                const inputs = state.formData.selectedMentors.map((m, idx) => `
+                    <div class="bg-slate-800 rounded-xl p-6 border border-slate-700 shadow-xl animate-fade-in relative mt-6">
+                        <div class="absolute -left-3 -top-3 bg-yellow-500 text-slate-900 font-bold w-8 h-8 rounded-full flex items-center justify-center shadow-lg border-2 border-slate-900 z-10">${idx + 1}</div>
+                        <div class="flex items-center gap-2 mb-4 pb-4 border-b border-slate-700 pl-4">
+                            ${icon('pen-tool', 'text-purple-400 w-6 h-6')}
+                            <h3 class="text-xl font-bold text-white">書寫 ${m.name} 的覺醒故事</h3>
+                        </div>
+                        <div class="space-y-6 pl-2">
+                            <div>
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-2">
+                                    <label class="block text-base font-bold text-slate-200">1. 導師的「磨練」時刻 (故事過程)</label>
+                                    <span class="text-xs bg-gradient-to-r from-blue-600 to-blue-500 px-3 py-1 rounded-full text-white shadow font-medium tracking-wide">公式：誰 + 遭遇的逆境 + 如何解決 + 結果</span>
+                                </div>
+                                <textarea oninput="actions.updateMentorInput('${m.id}', 'story', this.value)"
+                                    class="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-white focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 outline-none min-h-[120px]"
+                                    placeholder="請依照公式書寫名人的故事：\n(誰) ${m.name} (遭遇的逆境)... (如何解決)... (結果)最終..."
+                                >${state.formData.mentorInputs[m.id]?.story || ''}</textarea>
+                            </div>
+                            <div>
+                                <label class="block text-base font-bold text-slate-200 mb-2">2. 你從導師身上學到了什麼？ (覺醒態度)</label>
+                                <div class="bg-purple-900/20 border border-purple-500/30 p-3 rounded-lg mb-3">
+                                    <p class="text-xs text-purple-300 font-bold mb-1 uppercase">關鍵字提示</p>
+                                    <p class="text-sm text-purple-100">${m.solution}</p>
+                                </div>
+                                <textarea oninput="actions.updateMentorInput('${m.id}', 'lesson', this.value)"
+                                    class="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-white focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 outline-none min-h-[100px]"
+                                    placeholder="請參考關鍵字，寫出你的體悟：\n這讓我學到了面對困難時，應該..."
+                                >${state.formData.mentorInputs[m.id]?.lesson || ''}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                mainContent = `
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">${mentorGrid}</div>
+                        <div class="flex items-center justify-between text-sm px-2">
+                            <span class="text-slate-400">目前召喚人數：</span>
+                            <span class="font-bold ${state.formData.selectedMentors.length === 2 ? 'text-green-400' : 'text-yellow-400'}">${state.formData.selectedMentors.length} / 2 位</span>
+                        </div>
+                        ${inputs}
+                        ${state.formData.selectedMentors.length === 1 ? `<div class="p-4 border-2 border-dashed border-slate-700 rounded-xl text-center text-slate-500 flex flex-col items-center gap-2">${icon('alert-circle')} <span>還需要召喚第 2 位導師才能解鎖下一關</span></div>` : ''}
+                    </div>
+                `;
+            }
+
+            // --- Level 3: Conclusion ---
+            else if (state.currentLevel === 3) {
+                mainContent = `
+                    <div class="space-y-6 animate-fade-in">
+                        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
+                            <label class="block text-xl font-bold text-white mb-4 flex items-center gap-2">${icon('award', 'text-purple-400')} 第一步：選擇一句總結名言</label>
+                            <div class="space-y-3">
+                                ${conclusionQuotes.map((q, idx) => `
+                                    <button onclick="actions.setQuote(${idx})" 
+                                        class="w-full p-4 rounded-xl border-2 text-left transition-all ${state.formData.quote?.id === q.id ? 'border-purple-500 bg-purple-900/20 shadow-lg' : 'border-slate-700 bg-slate-800 hover:bg-slate-750 hover:border-slate-500'}">
+                                        <p class="text-lg font-serif italic mb-1 ${state.formData.quote?.id === q.id ? 'text-white' : 'text-slate-300'}">${q.text}</p>
+                                        <p class="text-sm text-slate-400 text-right">— ${q.author}</p>
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+                        ${state.formData.quote ? `
+                            <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 animate-fade-in">
+                                <label class="block text-xl font-bold text-white mb-2 flex items-center gap-2">${icon('pen-tool', 'text-yellow-400')} 第二步：寫下你的覺醒結論</label>
+                                <p class="text-slate-400 mb-4 text-sm">請承接上面的名言，用一句你自己的話，總結你對失敗的看法。</p>
+                                <textarea oninput="actions.updateConclusion(this.value)"
+                                    class="w-full bg-slate-900 border-2 border-slate-600 rounded-lg p-4 text-white text-lg focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500/50 outline-none transition-all min-h-[100px]"
+                                    placeholder="例如：因此，我們不應該害怕失敗，而是要擁抱它，讓它成為我們通往成功的墊腳石。"
+                                >${state.formData.customConclusion}</textarea>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }
+
+            // --- Level 4: Report ---
+            else if (state.currentLevel === 4) {
+                mainContent = `
+                    <div class="space-y-6 animate-fade-in">
+                        <div class="bg-slate-800 rounded-2xl p-8 border border-slate-700 relative overflow-hidden text-center shadow-2xl">
+                             <div class="absolute top-0 left-0 w-32 h-32 bg-purple-500/20 rounded-full blur-3xl -ml-10 -mt-10"></div>
+                             <div class="absolute bottom-0 right-0 w-32 h-32 bg-yellow-500/20 rounded-full blur-3xl -mr-10 -mb-10"></div>
+                             <div class="relative z-10">
+                                <div class="inline-block p-4 rounded-full bg-slate-700 mb-4 border-2 border-slate-600 shadow-[0_0_20px_rgba(234,179,8,0.2)]">
+                                    ${icon('award', `w-12 h-12 ${evalData.rank.color}`)}
+                                </div>
+                                <h2 class="text-3xl font-bold text-white mb-2 rpg-font">戰鬥結算報告</h2>
+                                <div class="flex items-center justify-center gap-4 my-4">
+                                    <div class="text-center">
+                                        <p class="text-sm text-slate-400 mb-1">總評分</p>
+                                        <p class="text-5xl font-black ${evalData.rank.color} drop-shadow-lg rpg-font">${evalData.score}</p>
+                                    </div>
+                                    <div class="h-12 w-px bg-slate-600"></div>
+                                    <div class="text-center">
+                                        <p class="text-sm text-slate-400 mb-1">獵人等級</p>
+                                        <div class="px-4 py-1 rounded-full ${evalData.rank.bg} bg-opacity-20 border ${evalData.rank.color.replace('text', 'border')} font-bold">
+                                            ${evalData.rank.title}
+                                        </div>
+                                    </div>
+                                </div>
+                             </div>
+                        </div>
+
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div class="bg-slate-700/50 p-6 rounded-xl border border-slate-600 h-full">
+                                <h3 class="text-xl font-bold text-blue-300 mb-4 flex items-center gap-2">${icon('target', 'w-5 h-5')} OREO 邏輯檢視</h3>
+                                <div class="space-y-4 text-sm text-slate-300">
+                                    <div>
+                                        <span class="text-blue-400 font-bold block mb-1 flex items-center gap-1">${icon('check-circle-2', 'w-3 h-3')} 【O】 覺醒屬性 (Opinion)</span>
+                                        <div class="bg-slate-800 p-3 rounded border-l-4 border-blue-500">${state.formData.stance?.title}</div>
+                                    </div>
+                                    <div>
+                                        <span class="text-green-400 font-bold block mb-1 flex items-center gap-1">${icon('zap', 'w-3 h-3')} 【R】 理由必殺技 (Reason)</span>
+                                        <div class="bg-slate-800 p-3 rounded border-l-4 border-green-500 line-clamp-2">${state.formData.reason || "未輸入"}</div>
+                                    </div>
+                                    <div>
+                                        <span class="text-yellow-400 font-bold block mb-1 flex items-center gap-1">${icon('user', 'w-3 h-3')} 【E】 導師召喚 (Evidence)</span>
+                                        <div class="bg-slate-800 p-3 rounded border-l-4 border-yellow-500">${state.formData.selectedMentors.map(m => m.name).join('、') || "未召喚"}</div>
+                                    </div>
+                                    <div>
+                                        <span class="text-red-400 font-bold block mb-1 flex items-center gap-1">${icon('target', 'w-3 h-3')} 【O】 終極結論 (Conclusion)</span>
+                                        <div class="bg-slate-800 p-3 rounded border-l-4 border-red-500 line-clamp-2">${state.formData.customConclusion || "未輸入"}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-700/50 p-6 rounded-xl border border-slate-600 h-full">
+                                <h3 class="text-xl font-bold text-yellow-300 mb-4 flex items-center gap-2">${icon('star', 'w-5 h-5')} 戰力分析</h3>
+                                <ul class="space-y-3 mb-6">
+                                    ${evalData.comments.map(c => `
+                                        <li class="flex items-start gap-3 bg-slate-800/50 p-3 rounded-lg">
+                                            ${c.type === 'good' ? icon('check-circle-2', 'text-green-400 mt-1 shrink-0 w-4 h-4') : 
+                                              c.type === 'warn' ? icon('award', 'text-yellow-400 mt-1 shrink-0 w-4 h-4') : 
+                                              icon('alert-triangle', 'text-red-400 mt-1 shrink-0 w-4 h-4')}
+                                            <span class="text-slate-200 text-sm leading-relaxed">${c.text}</span>
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                                <div class="mt-auto pt-4 border-t border-slate-600">
+                                    <div class="flex justify-between items-center text-sm text-slate-400 mb-2">
+                                        <span>手寫字數達成率</span>
+                                        <span>${Math.min(Math.round((evalData.userWordCount/180)*100), 100)}%</span>
+                                    </div>
+                                    <div class="h-2 bg-slate-800 rounded-full overflow-hidden">
+                                        <div class="h-full ${evalData.rank.bg}" style="width: ${Math.min((evalData.userWordCount/180)*100, 100)}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                         <div class="bg-white text-slate-900 rounded-lg p-6 md:p-8 shadow-2xl relative mt-8">
+                            <div class="flex justify-between items-center mb-6 border-b-2 border-slate-100 pb-4">
+                                <h3 class="text-2xl font-bold text-slate-900 flex items-center gap-2">${icon('file-text', 'text-slate-600')} 最終文章預覽</h3>
+                            </div>
+                            <div class="prose prose-lg max-w-none font-serif leading-relaxed whitespace-pre-line text-slate-800 min-h-[200px] p-6 bg-slate-50 rounded-lg border border-slate-200">
+                                ${generateArticle()}
+                            </div>
+                             <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+                                <button onclick="actions.resetGame()" class="flex items-center justify-center gap-2 px-6 py-3 rounded-lg border-2 border-slate-300 text-slate-600 hover:bg-slate-50 transition-colors font-bold">
+                                    ${icon('refresh-ccw', 'w-4 h-4')} 重開副本
+                                </button>
+                                <button onclick="actions.copyText()" class="flex items-center justify-center gap-2 px-8 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:opacity-90 shadow-lg transform hover:-translate-y-1 transition-all font-bold">
+                                    ${icon('copy', 'w-4 h-4')} 複製文章
+                                </button>
+                             </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // --- 組裝主畫面 (HTML Structure) ---
+            app.innerHTML = `
+                <div class="sticky top-0 z-50 bg-slate-800/95 backdrop-blur-sm border-b border-slate-700 shadow-lg">
+                    <div class="bg-gradient-to-r from-blue-700 to-purple-800 text-white shadow-md">
+                        <div class="max-w-4xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+                            <div class="flex items-center gap-4">
+                                <div class="bg-white/10 p-2 rounded-xl backdrop-blur-sm border border-white/20 shadow-inner">
+                                    ${icon('sword', 'text-yellow-400 animate-pulse w-7 h-7')}
+                                </div>
+                                <div class="text-center md:text-left">
+                                    <h1 class="text-xs text-blue-200 font-bold uppercase tracking-[0.2em] mb-0.5">議論文寫作闖關地圖</h1>
+                                    <h2 class="text-2xl md:text-3xl font-black text-white leading-none tracking-tight drop-shadow-md rpg-font">主角覺醒之路</h2>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 md:gap-3 flex-wrap justify-center">
+                                <button onclick="actions.toggleQuoteBag()" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-full transition-all border border-indigo-400/50 shadow-lg group active:scale-95">
+                                    ${icon('quote', 'text-white w-4 h-4 group-hover:rotate-12 transition-transform')}
+                                    <span class="text-sm font-bold text-white">名言錦囊</span>
+                                </button>
+                                <button onclick="actions.toggleVocab()" class="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-full transition-all border border-slate-500 shadow-lg active:scale-95">
+                                    ${icon('book-open', 'text-yellow-400 w-4 h-4')}
+                                    <span class="text-sm font-bold text-slate-100">勇者的補給箱</span>
+                                </button>
+                                <div class="hidden sm:flex items-center gap-2 bg-black/30 px-4 py-2 rounded-full border border-white/10 backdrop-blur-md">
+                                    ${icon('pen-tool', 'text-green-400 w-4 h-4')}
+                                    <div class="flex items-baseline gap-1">
+                                        <span id="word-count-display" class="font-mono font-bold text-lg ${evalData.currentTotalWordCount >= 350 ? 'text-green-400' : 'text-white'}">${evalData.currentTotalWordCount}</span>
+                                        <span class="text-slate-400 text-xs font-medium">字</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="h-1.5 w-full bg-slate-900/50 backdrop-blur">
+                        <div class="h-full bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 transition-all duration-700 ease-out shadow-[0_0_10px_rgba(250,204,21,0.6)]" 
+                             style="width: ${(state.currentLevel / 4) * 100}%"></div>
+                    </div>
+                </div>
+
+                <main class="max-w-3xl mx-auto px-4 py-8">
+                    <div class="mb-8 text-center">
+                        <span class="inline-block py-1 px-4 rounded-full bg-purple-900/50 text-purple-300 text-sm font-bold tracking-widest border border-purple-500/30 mb-3 shadow-lg">LEVEL ${state.currentLevel + 1} / 5</span>
+                        <h2 class="text-3xl md:text-4xl font-black text-white mb-3 drop-shadow-xl tracking-tight rpg-font">
+                            ${state.currentLevel === 0 ? "選擇你的覺醒屬性" : 
+                              state.currentLevel === 1 ? "蓄積能量槽" : 
+                              state.currentLevel === 2 ? "雙重導師召喚" : 
+                              state.currentLevel === 3 ? "發動終結大招" : "覺醒完成！戰鬥結算報告"}
+                        </h2>
+                         <p class="text-slate-400 text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
+                            ${state.currentLevel === 0 ? "在三種成長心法中，選定一個作為你的核心立場 (Opinion)。" : 
+                              state.currentLevel === 1 ? "根據你的覺醒屬性，運用推薦的「複句」或「名言」來撰寫理由 (Reason)。" : 
+                              state.currentLevel === 2 ? "請選擇「兩位」導師，並依據公式寫下他們的故事與你的體悟 (Evidence)。" : 
+                              state.currentLevel === 3 ? "選擇一句名言，並加上「自己的話」來做總結，完成這篇議論文！" : 
+                              "恭喜！你已完成所有關卡，以下是你的戰鬥成果分析。"}
+                        </p>
+                    </div>
+
+                    ${mainContent}
+
+                    ${state.currentLevel < 4 ? `
+                        <div class="mt-10 flex justify-between items-center">
+                            <button onclick="actions.prevLevel()" ${state.currentLevel === 0 ? 'disabled' : ''} class="px-6 py-2 rounded-lg font-bold transition-colors ${state.currentLevel === 0 ? 'opacity-0 cursor-default' : 'text-slate-400 hover:text-white hover:bg-slate-800'}">上一步</button>
+                            <button onclick="actions.nextLevel()" ${!levelComplete ? 'disabled' : ''} class="group flex items-center gap-2 px-8 py-3 rounded-full font-bold shadow-lg transition-all ${levelComplete ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:shadow-purple-500/50 hover:scale-105' : 'bg-slate-700 text-slate-500 cursor-not-allowed'}">
+                                ${state.currentLevel === 3 ? '完成覺醒' : '下一關'}
+                                ${icon('chevron-right', `w-5 h-5 ${levelComplete ? 'group-hover:translate-x-1 transition-transform' : ''}`)}
+                            </button>
+                        </div>
+                    ` : ''}
+                </main>
+
+                ${state.showQuoteBag ? `
+                    <div class="fixed inset-0 z-[60] flex items-center justify-center px-4">
+                        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="actions.toggleQuoteBag()"></div>
+                        <div class="bg-indigo-900 rounded-2xl border-2 border-indigo-500/50 w-full max-w-lg p-6 relative shadow-2xl animate-fade-in max-h-[80vh] overflow-y-auto">
+                            <button onclick="actions.toggleQuoteBag()" class="absolute top-4 right-4 text-indigo-300 hover:text-white">✕</button>
+                            <div class="flex items-center gap-3 mb-6 sticky top-0 bg-indigo-900 pt-2 pb-4 border-b border-indigo-700 z-10">
+                                <div class="p-3 bg-indigo-600 rounded-lg shadow-lg">${icon('quote', 'text-white w-6 h-6')}</div>
+                                <div><h3 class="text-xl font-bold text-white flex items-center gap-2">名言錦囊 ${icon('lock', 'text-indigo-400 w-3 h-3')}</h3><p class="text-indigo-300 text-xs">強力寫作武器，請閱讀並內化，不要直接複製哦！</p></div>
+                            </div>
+                            <div class="space-y-6">
+                                ${argumentQuotes.map(q => `
+                                    <div class="bg-indigo-800/50 p-4 rounded-xl border border-indigo-700/50 hover:border-indigo-500 transition-colors">
+                                        <div class="mb-3"><p class="text-lg font-serif text-white mb-1">「${q.text}」</p><p class="text-sm text-indigo-400 text-right">— ${q.author}</p></div>
+                                        <div class="space-y-2 text-sm">
+                                            <div class="bg-black/20 p-2 rounded"><span class="text-indigo-300 font-bold block mb-1">💡 老師解析：</span><span class="text-slate-300">${q.analysis}</span></div>
+                                            <div class="bg-black/20 p-2 rounded"><span class="text-green-400 font-bold block mb-1">🚀 如何運用：</span><span class="text-slate-300 italic">${q.usage}</span></div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div class="mt-6 pt-4 border-t border-indigo-800 text-center">
+                                <button onclick="actions.toggleQuoteBag()" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full font-bold transition-colors">關閉錦囊</button>
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
+
+                ${state.showVocab ? `
+                    <div class="fixed inset-0 z-[60] flex items-center justify-center px-4">
+                        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="actions.toggleVocab()"></div>
+                        <div class="bg-slate-800 rounded-2xl border-2 border-yellow-600/50 w-full max-w-md p-6 relative shadow-2xl animate-fade-in">
+                            <button onclick="actions.toggleVocab()" class="absolute top-4 right-4 text-slate-400 hover:text-white">✕</button>
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="p-3 bg-yellow-900/30 rounded-lg border border-yellow-600/30">${icon('book-open', 'text-yellow-400 w-6 h-6')}</div>
+                                <h3 class="text-xl font-bold text-white">勇者的補給箱</h3>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <h4 class="text-purple-400 font-bold mb-2 text-sm uppercase tracking-wider">推薦成語</h4>
+                                    <div class="flex flex-wrap gap-2">
+                                        ${['越挫越勇', '破繭而出', '反敗為勝', '堅持不懈', '勇往直前'].map(w => `<span class="px-3 py-1 bg-slate-700 rounded-full text-slate-200 text-sm border border-slate-600">${w}</span>`).join('')}
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 class="text-blue-400 font-bold mb-2 text-sm uppercase tracking-wider">複句裝備包</h4>
+                                    <div class="space-y-2">
+                                        <div class="bg-slate-700/50 p-2 rounded border border-slate-600"><span class="text-green-300 font-bold text-sm">轉折複句：</span><span class="text-slate-300 text-sm">雖然...但是...</span></div>
+                                        <div class="bg-slate-700/50 p-2 rounded border border-slate-600"><span class="text-blue-300 font-bold text-sm">遞進複句：</span><span class="text-slate-300 text-sm">不僅...而且...</span></div>
+                                        <div class="bg-slate-700/50 p-2 rounded border border-slate-600"><span class="text-yellow-300 font-bold text-sm">因果複句：</span><span class="text-slate-300 text-sm">因為...所以...</span></div>
+                                        <div class="bg-slate-700/50 p-2 rounded border border-slate-600"><span class="text-purple-300 font-bold text-sm">條件複句：</span><span class="text-slate-300 text-sm">只要...，就...</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-6 pt-4 border-t border-slate-700 text-center"><p class="text-slate-500 text-xs">點擊畫面空白處關閉</p></div>
+                        </div>
+                    </div>
+                ` : ''}
+            `;
+
+            // 重要：每次重繪後，重新載入 Icons
+            lucide.createIcons();
+        }
+
+        // 初始化渲染
+        render();
+
+    </script>
+</body>
+</html>
